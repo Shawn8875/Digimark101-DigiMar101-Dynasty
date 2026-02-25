@@ -1,0 +1,73 @@
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { prisma } from '../../db/prisma';
+import { LoginRequestBody, ChangePasswordRequestBody } from './auth.types';
+
+const JWT_SECRET = process.env.JWT_SECRET as string;
+const INITIAL_ADMIN_EMAIL = process.env.INITIAL_ADMIN_EMAIL as string;
+const INITIAL_ADMIN_PASSWORD = process.env.INITIAL_ADMIN_PASSWORD as string;
+
+export async function login(body: LoginRequestBody) {
+  const { email, password } = body;
+
+  const userCount = await prisma.user.count();
+
+  // FIRST LOGIN EVER
+  if (userCount === 0) {
+    if (email !== INITIAL_ADMIN_EMAIL || password !== INITIAL_ADMIN_PASSWORD) {
+      throw new Error('Invalid credentials');
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await prisma.user.create({
+      data: {
+        email,
+        passwordHash,
+        role: 'ADMIN',
+        mustChangePassword: true,
+      },
+    });
+
+    const token = jwt.sign({ sub: user.id, role: user.role }, JWT_SECRET, {
+      expiresIn: '1d',
+    });
+
+    return { token, user };
+  }
+
+  // NORMAL LOGIN
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) throw new Error('Invalid credentials');
+
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) throw new Error('Invalid credentials');
+
+  const token = jwt.sign({ sub: user.id, role: user.role }, JWT_SECRET, {
+    expiresIn: '1d',
+  });
+
+  return { token, user };
+}
+
+export async function changePassword(userId: string, body: ChangePasswordRequestBody) {
+  const { currentPassword, newPassword } = body;
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) throw new Error('User not found');
+
+  const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+  if (!valid) throw new Error('Current password incorrect');
+
+  const newHash = await bcrypt.hash(newPassword, 10);
+
+  const updated = await prisma.user.update({
+    where: { id: userId },
+    data: {
+      passwordHash: newHash,
+      mustChangePassword: false,
+    },
+  });
+
+  return updated;
+}
