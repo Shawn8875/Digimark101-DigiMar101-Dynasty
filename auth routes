@@ -1,0 +1,10 @@
+import { Router } from 'express';
+import { loginHandler, changePasswordHandler } from './auth.controller';
+import { authMiddleware } from '../../middleware/authMiddleware';
+
+const router = Router();
+
+router.post('/login', loginHandler);
+router.post('/change-password', authMiddleware, changePasswordHandler);
+
+export default router;
