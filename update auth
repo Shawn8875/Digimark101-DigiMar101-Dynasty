@@ -1,0 +1,13 @@
+import { Request, Response, NextFunction } from 'express';
+
+export function requireRole(...allowedRoles: string[]) {
+  return (req: Request, res: Response, next: NextFunction) => {
+    const role = (req as any).userRole;
+
+    if (!allowedRoles.includes(role)) {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    next();
+  };
+}
