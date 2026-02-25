@@ -1,0 +1,46 @@
+import { SupportTicket, SupportMessage } from '@prisma/client';
+
+export interface AvaSupportAnalysis {
+  intent: string;
+  confidence: number; // 0–1
+  suggestedPriority: 'LOW' | 'NORMAL' | 'HIGH' | 'URGENT';
+  suggestedReply: string | null;
+  shouldAutoReply: boolean;
+  shouldAssignStaff: boolean;
+}
+
+export async function analyzeSupportTicket(
+  ticket: SupportTicket,
+  messages: SupportMessage[]
+): Promise<AvaSupportAnalysis> {
+  const lastMessage = messages[messages.length - 1];
+
+  // TODO: Replace this with real LLM call
+  const content = lastMessage?.content ?? '';
+
+  const isBilling = /billing|invoice|charge|refund/i.test(content);
+  const isAngry = /angry|upset|frustrated|cancel/i.test(content);
+
+  const intent = isBilling ? 'billing' : 'general';
+  const confidence = isBilling ? 0.9 : 0.6;
+
+  const suggestedPriority =
+    isAngry || isBilling ? 'HIGH' : 'NORMAL';
+
+  const suggestedReply =
+    intent === 'billing'
+      ? 'I see this is about billing. I’ll review your subscription details and clarify the charges.'
+      : 'Thanks for reaching out. I’m reviewing your account and will follow up with details shortly.';
+
+  const shouldAutoReply = confidence >= 0.8 && !isBilling;
+  const shouldAssignStaff = isBilling || isAngry || confidence < 0.7;
+
+  return {
+    intent,
+    confidence,
+    suggestedPriority,
+    suggestedReply,
+    shouldAutoReply,
+    shouldAssignStaff,
+  };
+}
