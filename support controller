@@ -1,0 +1,90 @@
+import { Request, Response } from 'express';
+import * as SupportService from './support.service';
+
+export async function createTicketHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId as string;
+    const { orgId, subject, content } = req.body;
+
+    const ticket = await SupportService.createTicket({
+      orgId,
+      createdByUserId: userId,
+      subject,
+      content,
+    });
+
+    res.status(201).json(ticket);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message ?? 'Failed to create ticket' });
+  }
+}
+
+export async function listTicketsHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId as string;
+    const role = (req as any).userRole as string;
+    const isInternal = role === 'ADMIN'; // adjust if you add STAFF role
+
+    const tickets = await SupportService.listTicketsForUser(userId, isInternal);
+    res.json(tickets);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message ?? 'Failed to list tickets' });
+  }
+}
+
+export async function getTicketHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId as string;
+    const role = (req as any).userRole as string;
+    const isInternal = role === 'ADMIN';
+
+    const ticket = await SupportService.getTicket(
+      req.params.id,
+      userId,
+      isInternal
+    );
+
+    if (!ticket) return res.status(404).json({ error: 'Ticket not found' });
+
+    res.json(ticket);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message ?? 'Failed to fetch ticket' });
+  }
+}
+
+export async function addMessageHandler(req: Request, res: Response) {
+  try {
+    const userId = (req as any).userId as string;
+    const role = (req as any).userRole as string;
+    const authorType = role === 'ADMIN' ? 'STAFF' : 'CLIENT';
+
+    const { content } = req.body;
+
+    const ticket = await SupportService.addMessage({
+      ticketId: req.params.id,
+      authorType,
+      authorId: userId,
+      content,
+    });
+
+    res.json(ticket);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message ?? 'Failed to add message' });
+  }
+}
+
+export async function updateTicketStatusHandler(req: Request, res: Response) {
+  try {
+    const { status, assignedToUserId } = req.body;
+
+    const ticket = await SupportService.updateTicketStatus({
+      ticketId: req.params.id,
+      status,
+      assignedToUserId,
+    });
+
+    res.json(ticket);
+  } catch (err: any) {
+    res.status(400).json({ error: err.message ?? 'Failed to update ticket' });
+  }
+}
