@@ -1,0 +1,21 @@
+import { Router } from 'express';
+import { authMiddleware } from '../../middleware/authMiddleware';
+import {
+  createTicketHandler,
+  listTicketsHandler,
+  getTicketHandler,
+  addMessageHandler,
+  updateTicketStatusHandler,
+} from './support.controller';
+
+const router = Router();
+
+router.use(authMiddleware);
+
+router.post('/', createTicketHandler);
+router.get('/', listTicketsHandler);
+router.get('/:id', getTicketHandler);
+router.post('/:id/messages', addMessageHandler);
+router.patch('/:id', updateTicketStatusHandler);
+
+export default router;
