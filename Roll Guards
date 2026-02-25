@@ -1,0 +1,5 @@
+router.post('/', requireRole('CLIENT_ADMIN', 'CLIENT_USER', 'INTERNAL_STAFF', 'SUPER_ADMIN'), createTicketHandler);
+router.get('/', requireRole('INTERNAL_STAFF', 'SUPER_ADMIN', 'CLIENT_ADMIN'), listTicketsHandler);
+router.get('/:id', requireRole('INTERNAL_STAFF', 'SUPER_ADMIN', 'CLIENT_ADMIN', 'CLIENT_USER'), getTicketHandler);
+router.post('/:id/messages', requireRole('INTERNAL_STAFF', 'SUPER_ADMIN', 'CLIENT_ADMIN', 'CLIENT_USER'), addMessageHandler);
+router.patch('/:id', requireRole('INTERNAL_STAFF', 'SUPER_ADMIN'), updateTicketStatusHandler);
