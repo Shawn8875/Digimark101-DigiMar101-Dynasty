@@ -1,0 +1,9 @@
+export interface LoginRequestBody {
+  email: string;
+  password: string;
+}
+
+export interface ChangePasswordRequestBody {
+  currentPassword: string;
+  newPassword: string;
+}
