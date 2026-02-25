@@ -1,0 +1,4 @@
+DATABASE_URL=postgres://...
+JWT_SECRET=super-long-random-string
+INITIAL_ADMIN_EMAIL=founder@digimark101.com
+INITIAL_ADMIN_PASSWORD=TempPass123!
