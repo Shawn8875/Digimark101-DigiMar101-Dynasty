@@ -1,0 +1,5 @@
+import supportRoutes from './modules/support/support.routes';
+
+// ...
+
+app.use('/api/support', supportRoutes);
