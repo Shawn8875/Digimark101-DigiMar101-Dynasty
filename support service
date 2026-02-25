@@ -1,0 +1,156 @@
+import { prisma } from '../../db/prisma';
+import { analyzeSupportTicket } from '../ava/ava.support';
+
+export async function createTicket(params: {
+  orgId?: string;
+  createdByUserId: string;
+  subject: string;
+  content: string;
+}) {
+  const ticket = await prisma.supportTicket.create({
+    data: {
+      orgId: params.orgId,
+      createdByUserId: params.createdByUserId,
+      subject: params.subject,
+      status: 'OPEN',
+      priority: 'NORMAL',
+      handledBy: 'MIXED',
+      messages: {
+        create: {
+          authorType: 'CLIENT',
+          authorId: params.createdByUserId,
+          content: params.content,
+        },
+      },
+    },
+    include: { messages: true },
+  });
+
+  const analysis = await analyzeSupportTicket(ticket, ticket.messages);
+
+  const updated = await prisma.supportTicket.update({
+    where: { id: ticket.id },
+    data: {
+      intent: analysis.intent,
+      lastAvaConfidence: analysis.confidence,
+      priority: analysis.suggestedPriority,
+      handledBy: analysis.shouldAssignStaff ? 'MIXED' : 'AVA',
+      messages: analysis.shouldAutoReply && analysis.suggestedReply
+        ? {
+            create: {
+              authorType: 'AVA',
+              content: analysis.suggestedReply,
+            },
+          }
+        : undefined,
+    },
+    include: { messages: true },
+  });
+
+  return updated;
+}
+
+export async function listTicketsForUser(userId: string, isInternal: boolean) {
+  if (isInternal) {
+    return prisma.supportTicket.findMany({
+      orderBy: { createdAt: 'desc' },
+      include: { messages: true, org: true, createdByUser: true },
+    });
+  }
+
+  // client: only tickets they created or in their org
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return [];
+
+  return prisma.supportTicket.findMany({
+    where: {
+      OR: [
+        { createdByUserId: userId },
+        { orgId: user.orgId ?? undefined },
+      ],
+    },
+    orderBy: { createdAt: 'desc' },
+    include: { messages: true },
+  });
+}
+
+export async function getTicket(ticketId: string, userId: string, isInternal: boolean) {
+  const ticket = await prisma.supportTicket.findUnique({
+    where: { id: ticketId },
+    include: { messages: true, org: true, createdByUser: true },
+  });
+  if (!ticket) return null;
+
+  if (isInternal) return ticket;
+
+  // client access check
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) return null;
+
+  if (ticket.createdByUserId !== userId && ticket.orgId !== user.orgId) {
+    return null;
+  }
+
+  return ticket;
+}
+
+export async function addMessage(params: {
+  ticketId: string;
+  authorType: 'CLIENT' | 'STAFF';
+  authorId: string;
+  content: string;
+}) {
+  const ticket = await prisma.supportTicket.findUnique({
+    where: { id: params.ticketId },
+    include: { messages: true },
+  });
+  if (!ticket) throw new Error('Ticket not found');
+
+  const message = await prisma.supportMessage.create({
+    data: {
+      ticketId: ticket.id,
+      authorType: params.authorType,
+      authorId: params.authorId,
+      content: params.content,
+    },
+  });
+
+  const messages = [...ticket.messages, message];
+  const analysis = await analyzeSupportTicket(ticket, messages);
+
+  const updated = await prisma.supportTicket.update({
+    where: { id: ticket.id },
+    data: {
+      intent: analysis.intent,
+      lastAvaConfidence: analysis.confidence,
+      priority: analysis.suggestedPriority,
+      handledBy: analysis.shouldAssignStaff ? 'MIXED' : 'AVA',
+      messages: analysis.shouldAutoReply && analysis.suggestedReply
+        ? {
+            create: {
+              authorType: 'AVA',
+              content: analysis.suggestedReply,
+            },
+          }
+        : undefined,
+    },
+    include: { messages: true },
+  });
+
+  return updated;
+}
+
+export async function updateTicketStatus(params: {
+  ticketId: string;
+  status: 'OPEN' | 'PENDING' | 'RESOLVED' | 'CLOSED';
+  assignedToUserId?: string | null;
+}) {
+  return prisma.supportTicket.update({
+    where: { id: params.ticketId },
+    data: {
+      status: params.status,
+      assignedToUserId: params.assignedToUserId ?? undefined,
+    },
+    include: { messages: true },
+  });
+}
