@@ -1,0 +1,19 @@
+enum UserRole {
+  SUPER_ADMIN
+  INTERNAL_STAFF
+  CLIENT_ADMIN
+  CLIENT_USER
+}
+
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  passwordHash       String
+  name               String?
+  role               UserRole @default(CLIENT_USER)
+  mustChangePassword Boolean  @default(false)
+  orgId              String?
+  org                Org?     @relation(fields: [orgId], references: [id])
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
