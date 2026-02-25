@@ -1,0 +1,54 @@
+model SupportTicket {
+  id                String            @id @default(cuid())
+  orgId             String?
+  org               Org?              @relation(fields: [orgId], references: [id])
+  createdByUserId   String
+  createdByUser     User              @relation("TicketCreator", fields: [createdByUserId], references: [id])
+  assignedToUserId  String?
+  assignedToUser    User?             @relation("TicketAssignee", fields: [assignedToUserId], references: [id])
+  subject           String
+  status            TicketStatus      @default(OPEN)
+  priority          TicketPriority    @default(NORMAL)
+  handledBy         TicketHandledBy   @default(MIXED)
+  intent            String?
+  lastAvaConfidence Float?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  messages          SupportMessage[]
+}
+
+model SupportMessage {
+  id          String              @id @default(cuid())
+  ticketId    String
+  ticket      SupportTicket       @relation(fields: [ticketId], references: [id])
+  authorType  SupportAuthorType
+  authorId    String?
+  content     String
+  createdAt   DateTime            @default(now())
+}
+
+enum TicketStatus {
+  OPEN
+  PENDING
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum TicketHandledBy {
+  AVA
+  STAFF
+  MIXED
+}
+
+enum SupportAuthorType {
+  CLIENT
+  STAFF
+  AVA
+}
