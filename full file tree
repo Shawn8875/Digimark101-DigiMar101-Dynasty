@@ -1,0 +1,80 @@
+backend/
+│
+├── api/
+│   └── index.ts
+│
+├── src/
+│   ├── app.ts
+│   ├── serverless.ts
+│   │
+│   ├── config/
+│   │   ├── env.ts
+│   │   └── logger.ts
+│   │
+│   ├── db/
+│   │   ├── prisma.ts
+│   │   └── schema.prisma
+│   │
+│   ├── middleware/
+│   │   ├── authMiddleware.ts
+│   │   ├── errorHandler.ts
+│   │   └── requestLogger.ts
+│   │
+│   ├── modules/
+│   │   ├── auth/
+│   │   │   ├── auth.controller.ts
+│   │   │   ├── auth.service.ts
+│   │   │   ├── auth.routes.ts
+│   │   │   └── auth.types.ts
+│   │   │
+│   │   ├── users/
+│   │   │   ├── user.controller.ts
+│   │   │   ├── user.service.ts
+│   │   │   ├── user.routes.ts
+│   │   │   └── user.types.ts
+│   │   │
+│   │   ├── orgs/
+│   │   │   ├── org.controller.ts
+│   │   │   ├── org.service.ts
+│   │   │   ├── org.routes.ts
+│   │   │   └── org.types.ts
+│   │   │
+│   │   ├── seats/
+│   │   │   ├── seat.controller.ts
+│   │   │   ├── seat.service.ts
+│   │   │   ├── seat.routes.ts
+│   │   │   └── seat.types.ts
+│   │   │
+│   │   ├── billing/
+│   │   │   ├── billing.controller.ts
+│   │   │   ├── billing.service.ts
+│   │   │   ├── billing.routes.ts
+│   │   │   └── billing.types.ts
+│   │   │
+│   │   ├── onboarding/
+│   │   │   ├── onboarding.controller.ts
+│   │   │   ├── onboarding.service.ts
+│   │   │   ├── onboarding.routes.ts
+│   │   │   └── onboarding.types.ts
+│   │   │
+│   │   ├── ava/
+│   │   │   ├── ava.controller.ts
+│   │   │   ├── ava.service.ts
+│   │   │   ├── ava.routes.ts
+│   │   │   └── ava.types.ts
+│   │
+│   ├── utils/
+│   │   ├── crypto.ts
+│   │   ├── jwt.ts
+│   │   ├── responses.ts
+│   │   └── validators.ts
+│   │
+│   └── types/
+│       ├── express.d.ts
+│       └── global.ts
+│
+├── package.json
+├── tsconfig.json
+├── .env
+├── .gitignore
+└── README.md
